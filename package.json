@@ -5,8 +5,9 @@
   "main": "index.js",
   "scripts": {
     "start": "node dist/server.js",
-    "dev": "nodemon src/server.ts",
-    "build": "tsc"
+    "dev": "nodemon --exec tsx src/server.ts",
+    "build": "tsc",
+    "dock": "docker-compose up --build -d"
   },
   "keywords": [],
   "author": "",
@@ -26,6 +27,7 @@
     "@types/pg": "^8.16.0",
     "nodemon": "^3.1.11",
     "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   }
 }
