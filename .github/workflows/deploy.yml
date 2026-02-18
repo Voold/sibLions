@@ -34,10 +34,10 @@ jobs:
     needs: build-and-push
 
     steps:
-        name: Checkout code
+      - name: Checkout code
         uses: actions/checkout@v4
 
-        name: Copy docker-compose via SCP
+      - name: Copy docker-compose via SCP
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.HOST }}
@@ -46,8 +46,8 @@ jobs:
           port: ${{ secrets.PORT }}
           source: "docker-compose.yml"
           target: "~/SL"
-
-        name: Deploy to Server via SSH
+        
+      - name: Deploy to Server via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.HOST }}
