@@ -40,18 +40,14 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.PORT }}
           script: |
-            # Переходим в папку проекта (создай её заранее на сервере)
             cd ~/app/SL
-            
-            # Авторизуем сервер в GHCR
+
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            
-            # Обновляем образы
+
             docker compose pull
-            
-            # Перезапускаем контейнеры
+
             docker compose up -d --remove-orphans
-            
-            # Чистим старые образы, чтобы не забивать диск
+
             docker image prune -f
