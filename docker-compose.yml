@@ -1,10 +1,10 @@
 services:
   # бэкенд
   api:
-    build: .
+    image: ghcr.io/voold/siblions:latest
     container_name: node_backend_app
     ports:
-      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:3034:3000"
     env_file:
       - .env
     depends_on:
@@ -22,7 +22,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
       POSTGRES_DB: ${DB_NAME:-my_database}
     ports:
-      - "5432:5432"
+      - "5433:5433"
     volumes:
       - pgdata:/var/lib/postgresql/data
     networks:
