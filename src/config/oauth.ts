@@ -1,14 +1,12 @@
-import dotenv from 'dotenv';
-import { get } from 'http';
-import path from 'path';
 
-dotenv.config({ path: path.resolve(process.cwd(), 'src', 'config', '.env') });
-
-export const oauthConfig = {
+export const getOauthConfig = {
   clientId: process.env.OAUTH_CLIENT_ID,
   clientSecret: process.env.OAUTH_CLIENT_SECRET,
-  redirectUri: 'https://songeng.voold.online/api/auth/callback',
-  authEndpoint: 'https://oauth.tpu.ru/authorize',
-  tokenEndpoint: 'https://oauth.tpu.ru/access_token',
-  getUserInfoEndpoint: 'https://oauth.tpu.ru/user',
+
+  redirectUri: `${process.env.OAUTH_REDIRECT_URI}`,
+  authEndpoint: `${process.env.OAUTH_BASE_URL}${process.env.OAUTH_AUTH_ENDPOINT}`,
+  tokenEndpoint: `${process.env.OAUTH_BASE_URL}${process.env.OAUTH_TOKEN_ENDPOINT}`,
+  getUserInfoEndpoint: `${process.env.OAUTH_BASE_URL}${process.env.OAUTH_USER_INFO_ENDPOINT}`,
+  getUserStudyInfoEndpoint: `${process.env.TPU_API_BASE_URL}${process.env.TPU_API_USER_STUDY_INFO}`,
 };
+
