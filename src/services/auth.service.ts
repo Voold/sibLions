@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getOauthConfig } from '../config/oauth.js';
+import type { TpuTokenResponse } from '../types/auth.types.js';
 
 export const getAccessToken = async (code: string) => {
   const params = new URLSearchParams();
@@ -14,12 +15,61 @@ export const getAccessToken = async (code: string) => {
   return response.data;
 };
 
-export const getUserInfo = async (accessToken: string) => {
+export const exchangeCodeForToken = async (code: string, codeVerifier: string): Promise<TpuTokenResponse> => {
+  const params = new URLSearchParams({
+    grant_type: 'authorization_code',
+    client_id: getOauthConfig.clientId!,
+    client_secret: getOauthConfig.clientSecret!,
+    code: code,
+    redirect_uri: getOauthConfig.redirectUri,
+    code_verifier: codeVerifier,
+  });
+
+  const response = await axios.post(getOauthConfig.tokenEndpoint, params.toString(), {
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+  });
+
+  return response.data;
+};
+
+export const getFullUserInfo = async (tokenType: string, accessToken: string) => {
+  try {
+    const [userInfoResponse, studyInfoResponse] = await Promise.all([
+
+      axios.get(getOauthConfig.getUserInfoEndpoint, {
+        headers: {
+          'apiKey': `${getOauthConfig.clientId}`,
+          'Authorization': `${tokenType} ${accessToken}`,
+        }
+      }),
+
+      axios.get(getOauthConfig.getUserStudyInfoEndpoint, {
+        headers: {
+          'apiKey': `920c27de-62ec-4f2a-95fa-ee833ff9f565`,
+          'Authorization': `${tokenType} ${accessToken}`,
+        }
+      })
+    ]);
+
+    return {
+      userInfo: userInfoResponse.data,
+      studyInfo: studyInfoResponse.data
+    };
+
+  } catch (error: any) {
+    console.error('--- ERROR GETTING FULL USER INFO ---');
+    console.error('URL failed:', error.config?.url);
+    console.error('Server Response Data:', error.response?.data);
+    throw error;
+  }
+};
+
+export const getUserInfo = async (tokenType: string, accessToken: string) => {
   try {
     const response = await axios.get(getOauthConfig.getUserInfoEndpoint, {
       headers: {
         'apiKey': `${getOauthConfig.clientId}`,
-        'Authorization': `Bearer ${accessToken}`,
+        'Authorization': `${tokenType} ${accessToken}`,
       }
     });
 
