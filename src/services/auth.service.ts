@@ -34,7 +34,7 @@ export const exchangeCodeForToken = async (code: string, codeVerifier: string): 
 
 export const getFullUserInfo = async (tokenType: string, accessToken: string) => {
   try {
-    const [userInfoResponse, studyInfoResponse] = await Promise.all([
+    const [userInfoResponse, studyInfoResponse, infoResponse] = await Promise.all([
 
       axios.get(getOauthConfig.getUserInfoEndpoint, {
         headers: {
@@ -48,12 +48,22 @@ export const getFullUserInfo = async (tokenType: string, accessToken: string) =>
           'apiKey': `920c27de-62ec-4f2a-95fa-ee833ff9f565`,
           'Authorization': `${tokenType} ${accessToken}`,
         }
+      }),
+
+      axios.get(getOauthConfig.getUserInfoEndpoint, {
+        headers: {
+          'apiKey': `920c27de-62ec-4f2a-95fa-ee833ff9f565`,
+          'Authorization': `${tokenType} ${accessToken}`,
+        }
       })
     ]);
 
     return {
       userInfo: userInfoResponse.data,
-      studyInfo: studyInfoResponse.data
+      studyInfo: studyInfoResponse.data,
+      infoResponse,
+      studyInfoResponse,
+      userInfoResponse,
     };
 
   } catch (error: any) {
