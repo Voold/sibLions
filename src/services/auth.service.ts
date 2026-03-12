@@ -61,9 +61,7 @@ export const getFullUserInfo = async (tokenType: string, accessToken: string) =>
     return {
       userInfo: userInfoResponse.data,
       studyInfo: studyInfoResponse.data,
-      infoResponse,
-      studyInfoResponse,
-      userInfoResponse,
+      infoResponse: infoResponse.data,
     };
 
   } catch (error: any) {
