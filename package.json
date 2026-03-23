@@ -9,6 +9,8 @@
     "build": "tsc",
     "db:seed": "tsx src/db/seed.ts --config src/config/drizzle.config.ts",
     "db:push": "npx drizzle-kit push --config src/config/drizzle.config.ts",
+    "db:generate": "npx drizzle-kit generate --config=src/config/drizzle.config.ts",
+    "db:migrate": "npx drizzle-kit migrate --config=src/config/drizzle.config.ts",
     "dock": "docker-compose up --build -d"
   },
   "keywords": [],
