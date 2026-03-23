@@ -1,4 +1,4 @@
-import { db } from './index.js';
+/* import { db } from './index.js';
 import * as schema from './schema.js';
 
 async function seed() {
@@ -56,4 +56,4 @@ async function seed() {
 seed().catch((err) => {
   console.error('Ошибка сидинга:', err);
   process.exit(1);
-});
+}); */
