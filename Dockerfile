@@ -16,4 +16,4 @@ RUN npm install --omit=dev
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "node dist/db/migrate.js && node dist/index.js"]
+CMD ["sh", "-c", "node dist/db/migrate.js && node dist/server.js"]
