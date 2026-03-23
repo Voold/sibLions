@@ -1,111 +1,73 @@
 import axios from 'axios';
 import { getOauthConfig } from '../config/oauth.js';
 import type { TpuTokenResponse } from '../types/auth.types.js';
+import type { NewUser } from '../types/user.types.js';
 
-export const getAccessToken = async (code: string) => {
-  const params = new URLSearchParams();
-  params.append('client_id', getOauthConfig.clientId as string);
-  params.append('client_secret', getOauthConfig.clientSecret as string);
-  params.append('grant_type', 'authorization_code');
-  params.append('code', code);
-  params.append('redirect_uri', getOauthConfig.redirectUri);
+const tpuApi = axios.create({
+  headers: {
+    'apiKey': process.env.TPU_API_APP_KEY,
+  }
+});
 
-  const response = await axios.post(getOauthConfig.tokenEndpoint, params);
-  
-  return response.data;
-};
-
-export const exchangeCodeForToken = async (code: string, codeVerifier: string): Promise<TpuTokenResponse> => {
+const getTokenParams = (code: string, verifier?: string) => {
   const params = new URLSearchParams({
     grant_type: 'authorization_code',
     client_id: getOauthConfig.clientId!,
     client_secret: getOauthConfig.clientSecret!,
     code: code,
     redirect_uri: getOauthConfig.redirectUri,
-    code_verifier: codeVerifier,
   });
+  if (verifier) params.append('code_verifier', verifier);
+  return params;
+};
 
+export const exchangeCodeForToken = async (code: string, codeVerifier?: string): Promise<TpuTokenResponse> => {
+  const params = getTokenParams(code, codeVerifier);
   const response = await axios.post(getOauthConfig.tokenEndpoint, params.toString(), {
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
   });
-
   return response.data;
 };
 
-export const getFullUserInfo = async (tokenType: string, accessToken: string) => {
+export const getFullUserInfoFromTpu = async (tokenType: string, accessToken: string) => {
+  const authHeader = `${tokenType} ${accessToken}`;
+  
   try {
-    const [userInfoResponse, studyInfoResponse, infoResponse] = await Promise.all([
-
-      axios.get(getOauthConfig.getUserInfoEndpoint, {
-        headers: {
-          'apiKey': `${getOauthConfig.clientId}`,
-          'Authorization': `${tokenType} ${accessToken}`,
-        }
-      }),
-
-      axios.get(getOauthConfig.getUserStudyInfoEndpoint, {
-        headers: {
-          'apiKey': `920c27de-62ec-4f2a-95fa-ee833ff9f565`,
-          'Authorization': `${tokenType} ${accessToken}`,
-        }
-      }),
-
-      axios.get(getOauthConfig.getUserInfoEndpoint, {
-        headers: {
-          'apiKey': `920c27de-62ec-4f2a-95fa-ee833ff9f565`,
-          'Authorization': `${tokenType} ${accessToken}`,
-        }
-      })
+    const [userRes, studyRes] = await Promise.all([
+      tpuApi.get(getOauthConfig.getUserInfoEndpoint, { headers: { Authorization: authHeader } }),
+      tpuApi.get(getOauthConfig.getUserStudyInfoEndpoint, { headers: { Authorization: authHeader } })
     ]);
 
     return {
-      userInfo: userInfoResponse.data,
-      studyInfo: studyInfoResponse.data,
-      infoResponse: infoResponse.data,
+      userInfo: userRes.data,
+      studyInfo: studyRes.data
     };
-
   } catch (error: any) {
-    console.error('--- ERROR GETTING FULL USER INFO ---');
-    console.error('URL failed:', error.config?.url);
-    console.error('Server Response Data:', error.response?.data);
+    console.error('[TPU API ERROR]:', error.response?.data || error.message);
     throw error;
   }
 };
 
-export const getUserInfo = async (tokenType: string, accessToken: string) => {
-  try {
-    const response = await axios.get(getOauthConfig.getUserInfoEndpoint, {
-      headers: {
-        'apiKey': `${getOauthConfig.clientId}`,
-        'Authorization': `${tokenType} ${accessToken}`,
-      }
-    });
+export const transformTpuToNewUser = (tpuRawData: any): NewUser => {
+  const { userInfo, studyInfo } = tpuRawData;
 
-    return response.data;
+  const mainStudy = studyInfo.data?.studies?.find((s: any) => s.record_book_number) 
+                   || studyInfo.data?.studies?.[0];
 
-  } catch (error: any) {
-    console.log('--- ERROR GETTING USER INFO ---');
-    console.log('URL:', error.config?.url);
-    console.log('Server Response Data:', error.response?.data); 
-    throw error;
-  }
+  return {
+    username: userInfo.login,
+    email: userInfo.email,
+    firstName: userInfo.first_name,
+    lastName: userInfo.last_name,
+    middleName: userInfo.patronymic,
+    tpuId: String(userInfo.user_id),
+    faculty: mainStudy?.department || 'Не указан',
+    groupName: mainStudy?.gruppa || 'Не указана',
+    course: mainStudy?.admission_year 
+      ? (new Date().getFullYear() - mainStudy.admission_year + 1) 
+      : null,
+    role: 'student',
+    currentLevelId: 1,
+    totalPoints: 0,
+  };
 };
-
-export const getUserStudyInfo = async (accessToken: string) => {
-  try {
-    const response = await axios.get(getOauthConfig.getUserStudyInfoEndpoint, {
-      headers: {
-        'apiKey': `920c27de-62ec-4f2a-95fa-ee833ff9f565`,
-        'Authorization': `Bearer ${accessToken}`,
-      }
-    });
-
-    return response.data;
-
-  } catch (error: any) {
-    console.log('--- ERROR GETTING USER STUDY INFO ---');
-    console.log('URL:', error.config?.url);
-    console.log('Server Response Data:', error.response?.data); 
-    throw error;
-  }
-}

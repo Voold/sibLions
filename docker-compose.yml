@@ -1,5 +1,5 @@
 services:
-  # бэкенд
+  # Бэкенд
   api:
     image: ghcr.io/voold/siblions:latest
     container_name: node_backend_app
@@ -8,11 +8,12 @@ services:
     env_file:
       - .env
     depends_on:
-      - db
+      db:
+        condition: service_healthy # Ждем, пока база реально будет готова принимать соединения
     networks:
       - app_network
 
-  # Бд
+  # БД
   db:
     image: postgres:15-alpine
     container_name: postgres_db
@@ -20,13 +21,19 @@ services:
     environment:
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
-      POSTGRES_DB: ${DB_NAME:-my_database}
+      POSTGRES_DB: ${DB_NAME:-siblions_db}
+
     ports:
-      - "5433:5433"
+      - "7678:5432" 
     volumes:
       - pgdata:/var/lib/postgresql/data
     networks:
       - app_network
+    healthcheck: # Проверка готовности базы
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-siblions_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 networks:
   app_network:

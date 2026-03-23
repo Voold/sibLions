@@ -1,25 +1,5 @@
-export interface Event {
-  id: number;
-  title: string;
-  date: string; 
-  location: string;
-  description: string;
-  fullDescription: string;
-  category: string;
-  maxParticipants: number;
-  currentParticipants: number;
-  maxSpectators: number;
-  currentSpectators: number;
-  organizer: string;
-  contactEmail: string;
-  contactPhone: string;
-  requirements: string;
-  price: number;
-  rewardsPoints: number;
-  duration: string;
-  level: string;
-  rules: string;
-  equipment?: string;
-}
+import type { InferSelectModel, InferInsertModel } from 'drizzle-orm';
+import { events } from '../db/schema.js';
 
-export type EventType = 'past' | 'upcoming';
+export type Event = InferSelectModel<typeof events>;
+export type NewEvent = InferInsertModel<typeof events>;
