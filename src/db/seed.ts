@@ -46,7 +46,7 @@ async function seed() {
   // 6. Регистрации и история
   console.log('Финальные штрихи (регистрации)...');
   await db.insert(schema.registrations).values([
-    { userId: insertedUsers[2].id, eventId: insertedEvents[0].id, role: 'participant', status: 'attended', attended: true },
+    { userId: insertedUsers[2]!.id, eventId: insertedEvents[0]!.id, role: 'participant', status: 'attended', attended: true },
   ]);
 
   console.log('--- Сидинг успешно завершен! ---');
