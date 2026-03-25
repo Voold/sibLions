@@ -48,7 +48,7 @@ export const login = async (req: Request, res: Response) => {
 
     res.cookie('app_token', accessToken, { 
       ...cookieOptions, 
-      maxAge: 60 * 60 * 1000 // 15 мин 
+      maxAge: 60 * 60 * 1000 // 1 час 
     });
 
     res.cookie('refresh_token', refreshToken, { 

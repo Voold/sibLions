@@ -3,7 +3,7 @@ import { getOauthConfig } from '../config/oauth.js';
 import type { TpuTokenResponse } from '../types/auth.types.js';
 import type { NewUser, User } from '../types/user.types.js';
 
-import * as jwt from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 
 import { eq, and, gt } from 'drizzle-orm';
 import { db } from '../db/index.js';
