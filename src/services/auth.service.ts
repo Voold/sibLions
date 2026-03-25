@@ -116,7 +116,6 @@ export const getFullUserInfoFromTpu = async (tokenType: string, accessToken: str
   try {
     const [userRes, studyRes] = await Promise.all([
       tpuApi.get(getOauthConfig.getUserInfoEndpoint, { headers: { Authorization: authHeader } }),
-      tpuApi.get(getOauthConfig.getUserInfoFullEndpoint, { headers: { Authorization: authHeader } }),
       tpuApi.get(getOauthConfig.getUserStudyInfoEndpoint, { headers: { Authorization: authHeader } })
     ]);
 
