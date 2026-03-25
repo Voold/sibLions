@@ -66,6 +66,15 @@ export const users = pgTable('users', {
   tpuIdIdx: index('idx_users_tpu_id').on(table.tpuId),
 }));
 
+export const sessions = pgTable('sessions', {
+  sessionId: varchar('session_id', { length: 255 }).primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  tokenHash: varchar('token_hash', { length: 255 }).notNull(),
+  expiresAt: timestamp('expires_at').notNull(),
+  isRevoked: boolean('is_revoked').default(false),
+  issuedAt: timestamp('issued_at').defaultNow(),
+});
+
 // 4. Мероприятия
 export const events = pgTable('events', {
   id: serial('id').primaryKey(),

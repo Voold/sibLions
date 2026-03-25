@@ -1,7 +1,14 @@
 import axios from 'axios';
 import { getOauthConfig } from '../config/oauth.js';
 import type { TpuTokenResponse } from '../types/auth.types.js';
-import type { NewUser } from '../types/user.types.js';
+import type { NewUser, User } from '../types/user.types.js';
+
+import * as jwt from 'jsonwebtoken';
+
+import { eq, and, gt } from 'drizzle-orm';
+import { db } from '../db/index.js';
+import { sessions, users } from '../db/schema.js';
+import crypto from 'crypto';
 
 const tpuApi = axios.create({
   headers: {
@@ -27,6 +34,80 @@ export const exchangeCodeForToken = async (code: string, codeVerifier?: string):
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
   });
   return response.data;
+};
+
+export const createSession = async (data: { userId: number; tokenHash: string; expiresAt: Date }) => {
+  return await db.insert(sessions).values({
+    sessionId: crypto.randomUUID(),
+    userId: data.userId,
+    tokenHash: data.tokenHash,
+    expiresAt: data.expiresAt,
+    isRevoked: false,
+    issuedAt: new Date()
+  });
+};
+
+export const generateJWT = (user: User, time: number): string => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET is not defined in environment variables');
+  }
+
+  const accessToken = jwt.sign(
+    { userId: user.id, role: user.role },
+    secret,
+    { expiresIn: time }
+  );
+
+  return accessToken;
+}
+
+export const generateRefresh = (): string => {
+  return crypto.randomBytes(40).toString('hex');
+}
+
+export const getTokenHash = (token: string): string => {
+  return crypto.createHash('sha256').update(token).digest('hex')
+}
+
+export const refreshSession = async (oldRefreshToken: string) => {
+
+  const oldHash = crypto.createHash('sha256').update(oldRefreshToken).digest('hex');
+
+  const [session] = await db
+    .select()
+    .from(sessions)
+    .where(
+      and(
+        eq(sessions.tokenHash, oldHash),
+        eq(sessions.isRevoked, false),
+        gt(sessions.expiresAt, new Date())
+      )
+    )
+    .limit(1);
+
+  if (!session) {
+    throw new Error('Invalid or expired session');
+  }
+
+  const [user] = await db.select().from(users).where(eq(users.id, session.userId)).limit(1);
+  if (!user) throw new Error('User not found');
+ 
+  const accessToken = generateJWT(user, 3600)
+  
+  const newRefreshToken = crypto.randomBytes(40).toString('hex');
+  const newHash = crypto.createHash('sha256').update(newRefreshToken).digest('hex');
+
+  await db
+    .update(sessions)
+    .set({
+      tokenHash: newHash,
+      issuedAt: new Date(),
+      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    })
+    .where(eq(sessions.sessionId, session.sessionId));
+
+  return { accessToken, newRefreshToken, user };
 };
 
 export const getFullUserInfoFromTpu = async (tokenType: string, accessToken: string) => {
