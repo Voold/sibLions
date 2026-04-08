@@ -2,6 +2,16 @@ import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import type { JwtPayload } from "../types/auth.types.js";
 
+const tryDecodeToken = (token: string, secret: string): JwtPayload | null => {
+  const decoded = jwt.verify(token, secret);
+
+  if (typeof decoded === "string" || !("userId" in decoded)) {
+    return null;
+  }
+
+  return decoded as JwtPayload;
+};
+
 export const authenticateToken = (
   req: Request,
   res: Response,
@@ -21,19 +31,43 @@ export const authenticateToken = (
   }
 
   try {
-    const decoded = jwt.verify(token, secret);
+    const decoded = tryDecodeToken(token, secret);
 
-    if (typeof decoded === "string" || !("userId" in decoded)) {
+    if (!decoded) {
       return res
         .status(401)
         .json({ message: "Unauthorized: invalid token payload" });
     }
 
-    req.user = decoded as JwtPayload;
+    req.user = decoded;
     next();
   } catch {
     return res
       .status(401)
       .json({ message: "Unauthorized: invalid or expired token" });
   }
+};
+
+export const attachUserIfPresent = (
+  req: Request,
+  _res: Response,
+  next: NextFunction,
+) => {
+  const token = req.cookies?.app_token;
+  const secret = process.env.JWT_SECRET;
+
+  if (!token || !secret) {
+    return next();
+  }
+
+  try {
+    const decoded = tryDecodeToken(token, secret);
+    if (decoded) {
+      req.user = decoded;
+    }
+  } catch {
+    // Optional auth: ignore invalid token and proceed as guest.
+  }
+
+  next();
 };

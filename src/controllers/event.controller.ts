@@ -3,7 +3,7 @@ import * as eventService from "../services/event.service.js";
 
 export const getEvents = async (req: Request, res: Response) => {
   try {
-    const events = await eventService.getAllEvents();
+    const events = await eventService.getEventSummaries(req.user?.userId);
     res.json(events);
   } catch (error) {
     res.status(500).json({ message: "Server error" });
@@ -12,7 +12,12 @@ export const getEvents = async (req: Request, res: Response) => {
 
 export const getEventDetail = async (req: Request, res: Response) => {
   const id = parseInt(req.params.id as string);
-  const event = await eventService.getEventById(id);
+
+  if (Number.isNaN(id)) {
+    return res.status(400).json({ message: "Invalid event id" });
+  }
+
+  const event = await eventService.getEventDetails(id, req.user?.userId);
 
   if (!event) {
     return res.status(404).json({ message: "Event not found" });
@@ -27,6 +32,11 @@ export const registerForEvent = async (req: Request, res: Response) => {
     }
 
     const eventId = parseInt(req.params.id as string);
+
+    if (Number.isNaN(eventId)) {
+      return res.status(400).json({ message: "Invalid event id" });
+    }
+
     const { registrationType } = req.body;
 
     if (!registrationType) {

@@ -1,16 +1,125 @@
 import { db } from "../db/index.js";
 import { events, registrations } from "../db/schema.js";
-import { eq, and, count } from "drizzle-orm";
+import { eq, and, count, inArray } from "drizzle-orm";
 import type { Event, Registration } from "../types/event.types.js";
 
 export const getAllEvents = async () => {
   return await db.select().from(events);
 };
 
+export const getEventSummaries = async (userId?: number) => {
+  const eventList = await db
+    .select({
+      id: events.id,
+      title: events.title,
+      startDate: events.startDate,
+      location: events.location,
+      description: events.description,
+      participantPoints: events.participantPoints,
+      fanPoints: events.fanPoints,
+      registrationDeadline: events.registrationDeadline,
+      status: events.status,
+    })
+    .from(events);
+
+  if (!userId || eventList.length === 0) {
+    return eventList.map((event) => ({
+      ...event,
+      isRegistered: false,
+    }));
+  }
+
+  const eventIds = eventList.map((event) => event.id);
+
+  const userRegistrations = await db
+    .select({
+      eventId: registrations.eventId,
+      role: registrations.role,
+    })
+    .from(registrations)
+    .where(
+      and(
+        eq(registrations.userId, userId),
+        inArray(registrations.eventId, eventIds),
+      ),
+    );
+
+  const registeredMap = new Map(
+    userRegistrations.map((registration) => [
+      registration.eventId,
+      registration.role,
+    ]),
+  );
+
+  return eventList.map((event) => ({
+    ...event,
+    isRegistered: registeredMap.has(event.id),
+    registrationType: registeredMap.get(event.id) ?? null,
+  }));
+};
+
 export const getEventById = async (id: number): Promise<Event | null> => {
   const result = await db.select().from(events).where(eq(events.id, id));
 
   return result[0] || null;
+};
+
+export const getEventDetails = async (eventId: number, userId?: number) => {
+  const event = await getEventById(eventId);
+
+  if (!event) {
+    return null;
+  }
+
+  const participantResult = await db
+    .select({ count: count() })
+    .from(registrations)
+    .where(
+      and(
+        eq(registrations.eventId, eventId),
+        eq(registrations.role, "participant"),
+      ),
+    );
+
+  const fanResult = await db
+    .select({ count: count() })
+    .from(registrations)
+    .where(
+      and(eq(registrations.eventId, eventId), eq(registrations.role, "fan")),
+    );
+
+  let userRegistration: Pick<
+    Registration,
+    "id" | "role" | "status" | "registeredAt"
+  > | null = null;
+
+  if (userId) {
+    const registrationResult = await db
+      .select({
+        id: registrations.id,
+        role: registrations.role,
+        status: registrations.status,
+        registeredAt: registrations.registeredAt,
+      })
+      .from(registrations)
+      .where(
+        and(
+          eq(registrations.userId, userId),
+          eq(registrations.eventId, eventId),
+        ),
+      )
+      .limit(1);
+
+    userRegistration = registrationResult[0] ?? null;
+  }
+
+  return {
+    ...event,
+    currentParticipants: participantResult[0]?.count ?? 0,
+    currentFans: fanResult[0]?.count ?? 0,
+    isRegistered: Boolean(userRegistration),
+    userRegistration,
+  };
 };
 
 export const registerForEvent = async (
