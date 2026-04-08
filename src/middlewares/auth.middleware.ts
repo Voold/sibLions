@@ -21,6 +21,11 @@ export const authenticateToken = (
   const secret = process.env.JWT_SECRET;
 
   if (!token) {
+    console.warn("[AUTH MIDDLEWARE]: Missing access token", {
+      method: req.method,
+      path: req.originalUrl,
+      ip: req.ip,
+    });
     return res
       .status(401)
       .json({ message: "Unauthorized: access token missing" });
@@ -34,6 +39,11 @@ export const authenticateToken = (
     const decoded = tryDecodeToken(token, secret);
 
     if (!decoded) {
+      console.warn("[AUTH MIDDLEWARE]: Invalid token payload", {
+        method: req.method,
+        path: req.originalUrl,
+        ip: req.ip,
+      });
       return res
         .status(401)
         .json({ message: "Unauthorized: invalid token payload" });
@@ -41,7 +51,13 @@ export const authenticateToken = (
 
     req.user = decoded;
     next();
-  } catch {
+  } catch (error) {
+    console.warn("[AUTH MIDDLEWARE]: Invalid or expired token", {
+      method: req.method,
+      path: req.originalUrl,
+      ip: req.ip,
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
     return res
       .status(401)
       .json({ message: "Unauthorized: invalid or expired token" });
