@@ -1,23 +1,39 @@
-import type { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
+import type { Request, Response, NextFunction } from "express";
+import jwt from "jsonwebtoken";
+import type { JwtPayload } from "../types/auth.types.js";
 
-export const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+export const authenticateToken = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  const token = req.cookies?.app_token;
+  const secret = process.env.JWT_SECRET;
 
-  if (!token) return res.status(401).json({ message: 'No token provided' });
+  if (!token) {
+    return res
+      .status(401)
+      .json({ message: "Unauthorized: access token missing" });
+  }
 
-  jwt.verify(token, process.env.JWT_SECRET!, (err: any, user: any) => {
-    if (err) return res.status(403).json({ message: 'Invalid token' });
-    
-    (req as any).user = user; // Сохраняем данные юзера в запрос
+  if (!secret) {
+    return res.status(500).json({ message: "Server auth is not configured" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, secret);
+
+    if (typeof decoded === "string" || !("userId" in decoded)) {
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: invalid token payload" });
+    }
+
+    req.user = decoded as JwtPayload;
     next();
-  });
+  } catch {
+    return res
+      .status(401)
+      .json({ message: "Unauthorized: invalid or expired token" });
+  }
 };
-
-// В роутах
-//
-// routes/profile.routes.ts
-//import { authenticateToken } from '../middlewares/auth.middleware.js';
-//
-//router.get('/orders', authenticateToken, profileController.getOrders);
