@@ -169,3 +169,21 @@ export const getEventParticipantCount = async (
 
   return result[0]?.count || 0;
 };
+
+export const unregisterFromEvent = async (
+  userId: number,
+  eventId: number,
+): Promise<Registration> => {
+  const result = await db
+    .delete(registrations)
+    .where(
+      and(eq(registrations.userId, userId), eq(registrations.eventId, eventId)),
+    )
+    .returning();
+
+  if (!result[0]) {
+    throw new Error("User is not registered for this event");
+  }
+
+  return result[0];
+};

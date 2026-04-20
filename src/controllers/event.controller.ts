@@ -86,3 +86,42 @@ export const registerForEvent = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+export const unregisterFromEvent = async (req: Request, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const eventId = parseInt(req.params.id as string);
+
+    if (Number.isNaN(eventId)) {
+      return res.status(400).json({ message: "Invalid event id" });
+    }
+
+    const event = await eventService.getEventById(eventId);
+    if (!event) {
+      return res.status(404).json({ message: "Event not found" });
+    }
+
+    await eventService.unregisterFromEvent(req.user.userId, eventId);
+    const currentParticipants =
+      await eventService.getEventParticipantCount(eventId);
+
+    return res.status(200).json({
+      success: true,
+      message: "Отписка от мероприятия выполнена успешно",
+      event: {
+        currentParticipants,
+      },
+    });
+  } catch (error: any) {
+    console.error("[UNREGISTER EVENT ERROR]:", error.message);
+
+    if (error.message === "User is not registered for this event") {
+      return res.status(404).json({ message: error.message });
+    }
+
+    return res.status(500).json({ message: "Server error" });
+  }
+};

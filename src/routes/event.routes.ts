@@ -14,5 +14,10 @@ router.post(
   authenticateToken,
   eventController.registerForEvent,
 );
+router.delete(
+  "/:id/unregister",
+  authenticateToken,
+  eventController.unregisterFromEvent,
+);
 
 export default router;
