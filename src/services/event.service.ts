@@ -83,6 +83,16 @@ export const getEventById = async (id: number): Promise<Event | null> => {
   return result[0] || null;
 };
 
+export const getEventByUuid = async (eventUuid: string): Promise<Event | null> => {
+  const result = await db
+    .select()
+    .from(events)
+    .where(eq(events.uuid, eventUuid))
+    .limit(1);
+
+  return result[0] || null;
+};
+
 export const createEvent = async (input: CreateEventInput) => {
   const eventUuid = randomUUID();
 

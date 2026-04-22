@@ -124,13 +124,22 @@ export const getEvents = async (req: Request, res: Response) => {
 };
 
 export const getEventDetail = async (req: Request, res: Response) => {
-  const id = parseInt(req.params.id as string);
+  const eventUuid = req.params.uuid as string;
 
-  if (Number.isNaN(id)) {
-    return res.status(400).json({ message: "Invalid event id" });
+  if (!eventUuid || !UUID_V4_REGEX.test(eventUuid)) {
+    return res.status(400).json({ message: "Invalid event uuid" });
   }
 
-  const event = await eventService.getEventDetails(id, req.user?.userId);
+  const eventByUuid = await eventService.getEventByUuid(eventUuid);
+
+  if (!eventByUuid) {
+    return res.status(404).json({ message: "Event not found" });
+  }
+
+  const event = await eventService.getEventDetails(
+    eventByUuid.id,
+    req.user?.userId,
+  );
 
   if (!event) {
     return res.status(404).json({ message: "Event not found" });
@@ -144,10 +153,10 @@ export const registerForEvent = async (req: Request, res: Response) => {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    const eventId = parseInt(req.params.id as string);
+    const eventUuid = req.params.uuid as string;
 
-    if (Number.isNaN(eventId)) {
-      return res.status(400).json({ message: "Invalid event id" });
+    if (!eventUuid || !UUID_V4_REGEX.test(eventUuid)) {
+      return res.status(400).json({ message: "Invalid event uuid" });
     }
 
     const { registrationType } = req.body;
@@ -162,18 +171,18 @@ export const registerForEvent = async (req: Request, res: Response) => {
         .json({ message: 'registrationType must be "participant" or "fan"' });
     }
 
-    const event = await eventService.getEventById(eventId);
+    const event = await eventService.getEventByUuid(eventUuid);
     if (!event) {
       return res.status(404).json({ message: "Event not found" });
     }
 
     const registration = await eventService.registerForEvent(
       req.user.userId,
-      eventId,
+      event.id,
       registrationType,
     );
     const currentParticipants =
-      await eventService.getEventParticipantCount(eventId);
+      await eventService.getEventParticipantCount(event.id);
 
     res.status(201).json({
       success: true,
@@ -206,20 +215,20 @@ export const unregisterFromEvent = async (req: Request, res: Response) => {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    const eventId = parseInt(req.params.id as string);
+    const eventUuid = req.params.uuid as string;
 
-    if (Number.isNaN(eventId)) {
-      return res.status(400).json({ message: "Invalid event id" });
+    if (!eventUuid || !UUID_V4_REGEX.test(eventUuid)) {
+      return res.status(400).json({ message: "Invalid event uuid" });
     }
 
-    const event = await eventService.getEventById(eventId);
+    const event = await eventService.getEventByUuid(eventUuid);
     if (!event) {
       return res.status(404).json({ message: "Event not found" });
     }
 
-    await eventService.unregisterFromEvent(req.user.userId, eventId);
+    await eventService.unregisterFromEvent(req.user.userId, event.id);
     const currentParticipants =
-      await eventService.getEventParticipantCount(eventId);
+      await eventService.getEventParticipantCount(event.id);
 
     return res.status(200).json({
       success: true,

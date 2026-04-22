@@ -10,14 +10,14 @@ const router = Router();
 router.post("/", authenticateToken, eventController.createEvent);
 router.delete("/:uuid", authenticateToken, eventController.deleteEventByUuid);
 router.get("/", attachUserIfPresent, eventController.getEvents);
-router.get("/:id", attachUserIfPresent, eventController.getEventDetail);
+router.get("/:uuid", attachUserIfPresent, eventController.getEventDetail);
 router.post(
-  "/:id/register",
+  "/:uuid/register",
   authenticateToken,
   eventController.registerForEvent,
 );
 router.delete(
-  "/:id/unregister",
+  "/:uuid/unregister",
   authenticateToken,
   eventController.unregisterFromEvent,
 );
