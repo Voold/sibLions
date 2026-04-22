@@ -109,6 +109,19 @@ export const createEvent = async (input: CreateEventInput) => {
   return result[0];
 };
 
+export const deleteEventByUuid = async (eventUuid: string) => {
+  const result = await db
+    .delete(events)
+    .where(eq(events.uuid, eventUuid))
+    .returning({ uuid: events.uuid });
+
+  if (!result[0]) {
+    throw new Error("Event not found");
+  }
+
+  return result[0];
+};
+
 export const getEventDetails = async (eventId: number, userId?: number) => {
   const event = await getEventById(eventId);
 

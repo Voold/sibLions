@@ -10,6 +10,9 @@ const parseOptionalDate = (value: unknown): Date | undefined => {
   return Number.isNaN(parsedDate.getTime()) ? undefined : parsedDate;
 };
 
+const UUID_V4_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 export const createEvent = async (req: Request, res: Response) => {
   try {
     if (!req.user) {
@@ -78,6 +81,35 @@ export const createEvent = async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error("[CREATE EVENT ERROR]:", error.message);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const deleteEventByUuid = async (req: Request, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const eventUuid = req.params.uuid as string;
+
+    if (!eventUuid || !UUID_V4_REGEX.test(eventUuid)) {
+      return res.status(400).json({ message: "Invalid event uuid" });
+    }
+
+    const deletedEvent = await eventService.deleteEventByUuid(eventUuid);
+
+    return res.status(200).json({
+      message: "Мероприятие успешно удалено",
+      uuid: deletedEvent.uuid,
+    });
+  } catch (error: any) {
+    console.error("[DELETE EVENT ERROR]:", error.message);
+
+    if (error.message === "Event not found") {
+      return res.status(404).json({ message: "Event not found" });
+    }
+
     return res.status(500).json({ message: "Server error" });
   }
 };
