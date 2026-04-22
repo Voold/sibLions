@@ -180,7 +180,7 @@ export const registerForEvent = async (req: Request, res: Response) => {
       message: "Регистрация прошла успешно",
       registration: {
         id: registration.id,
-        eventId: registration.eventId,
+        eventUuid: event.uuid,
         userId: registration.userId,
         registrationType: registration.role,
         registeredAt: registration.registeredAt?.toISOString(),
@@ -224,6 +224,7 @@ export const unregisterFromEvent = async (req: Request, res: Response) => {
     return res.status(200).json({
       success: true,
       message: "Отписка от мероприятия выполнена успешно",
+      uuid: event.uuid,
       event: {
         currentParticipants,
       },

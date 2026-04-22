@@ -20,13 +20,16 @@ interface CreateEventInput {
 }
 
 export const getAllEvents = async () => {
-  return await db.select().from(events);
+  const result = await db.select().from(events);
+
+  return result.map(({ id: _id, ...event }) => event);
 };
 
 export const getEventSummaries = async (userId?: number) => {
   const eventList = await db
     .select({
-      id: events.id,
+      internalId: events.id,
+      uuid: events.uuid,
       title: events.title,
       startDate: events.startDate,
       location: events.location,
@@ -39,13 +42,13 @@ export const getEventSummaries = async (userId?: number) => {
     .from(events);
 
   if (!userId || eventList.length === 0) {
-    return eventList.map((event) => ({
+    return eventList.map(({ internalId: _internalId, ...event }) => ({
       ...event,
       isRegistered: false,
     }));
   }
 
-  const eventIds = eventList.map((event) => event.id);
+  const eventIds = eventList.map((event) => event.internalId);
 
   const userRegistrations = await db
     .select({
@@ -67,10 +70,10 @@ export const getEventSummaries = async (userId?: number) => {
     ]),
   );
 
-  return eventList.map((event) => ({
+  return eventList.map(({ internalId: _internalId, ...event }) => ({
     ...event,
-    isRegistered: registeredMap.has(event.id),
-    registrationType: registeredMap.get(event.id) ?? null,
+    isRegistered: registeredMap.has(_internalId),
+    registrationType: registeredMap.get(_internalId) ?? null,
   }));
 };
 
@@ -171,8 +174,10 @@ export const getEventDetails = async (eventId: number, userId?: number) => {
     userRegistration = registrationResult[0] ?? null;
   }
 
+  const { id: _id, ...publicEvent } = event;
+
   return {
-    ...event,
+    ...publicEvent,
     currentParticipants: participantResult[0]?.count ?? 0,
     currentFans: fanResult[0]?.count ?? 0,
     isRegistered: Boolean(userRegistration),
