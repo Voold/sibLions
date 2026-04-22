@@ -1,7 +1,23 @@
 import { db } from "../db/index.js";
 import { events, registrations } from "../db/schema.js";
 import { eq, and, count, inArray } from "drizzle-orm";
+import { randomUUID } from "crypto";
 import type { Event, Registration } from "../types/event.types.js";
+
+interface CreateEventInput {
+  title: string;
+  description?: string | undefined;
+  eventType?: string | undefined;
+  status?: string | undefined;
+  startDate: Date;
+  endDate: Date;
+  registrationDeadline?: Date | undefined;
+  participantPoints?: number | undefined;
+  fanPoints?: number | undefined;
+  maxParticipants?: number | undefined;
+  location?: string | undefined;
+  organizerId?: number | undefined;
+}
 
 export const getAllEvents = async () => {
   return await db.select().from(events);
@@ -62,6 +78,35 @@ export const getEventById = async (id: number): Promise<Event | null> => {
   const result = await db.select().from(events).where(eq(events.id, id));
 
   return result[0] || null;
+};
+
+export const createEvent = async (input: CreateEventInput) => {
+  const eventUuid = randomUUID();
+
+  const result = await db
+    .insert(events)
+    .values({
+      uuid: eventUuid,
+      title: input.title,
+      description: input.description,
+      eventType: input.eventType,
+      status: input.status ?? "draft",
+      startDate: input.startDate,
+      endDate: input.endDate,
+      registrationDeadline: input.registrationDeadline,
+      participantPoints: input.participantPoints ?? 0,
+      fanPoints: input.fanPoints ?? 0,
+      maxParticipants: input.maxParticipants ?? 0,
+      location: input.location,
+      organizerId: input.organizerId,
+    })
+    .returning({ uuid: events.uuid });
+
+  if (!result[0]) {
+    throw new Error("Failed to create event");
+  }
+
+  return result[0];
 };
 
 export const getEventDetails = async (eventId: number, userId?: number) => {

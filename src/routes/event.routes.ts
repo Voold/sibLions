@@ -7,6 +7,7 @@ import {
 
 const router = Router();
 
+router.post("/", authenticateToken, eventController.createEvent);
 router.get("/", attachUserIfPresent, eventController.getEvents);
 router.get("/:id", attachUserIfPresent, eventController.getEventDetail);
 router.post(

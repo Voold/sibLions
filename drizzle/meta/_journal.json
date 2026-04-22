@@ -15,6 +15,13 @@
       "when": 1774443574925,
       "tag": "0001_shallow_storm",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1776810000000,
+      "tag": "0002_event_uuid",
+      "breakpoints": true
     }
   ]
 }
