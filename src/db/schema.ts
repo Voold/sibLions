@@ -78,6 +78,7 @@ export const sessions = pgTable('sessions', {
 // 4. Мероприятия
 export const events = pgTable('events', {
   id: serial('id').primaryKey(),
+  uuid: varchar('uuid', { length: 36 }).notNull().unique(),
   title: varchar('title', { length: 200 }).notNull(),
   description: text('description'),
   eventType: varchar('event_type', { length: 20 }), // sport/fan/training

@@ -8,6 +8,6 @@ export type Registration = InferSelectModel<typeof registrations>;
 export type NewRegistration = InferInsertModel<typeof registrations>;
 
 export interface RegisterPayload {
-  eventId: number;
+  eventUuid: string;
   registrationType: "participant" | "fan";
 }
