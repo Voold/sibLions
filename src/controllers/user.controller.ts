@@ -27,7 +27,7 @@ export const getUserData = async (req: Request, res: Response) => {
   }
 };
 
-export const createUser = async (req: Request, res: Response) => {
+/* export const createUser = async (req: Request, res: Response) => {
   try {
     //ANCHOR - ZOD Валидация
     const userData: NewUser = req.body;
@@ -42,4 +42,4 @@ export const createUser = async (req: Request, res: Response) => {
     }
     res.status(500).json({ message: 'Server error' });
   }
-};
+}; */
