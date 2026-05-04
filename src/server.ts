@@ -9,6 +9,7 @@ import eventRoutes from "./routes/event.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import shopRoutes from "./routes/shop.routes.js";
 import profileRoutes from "./routes/profile.routes.js";
+import levelRoutes from "./routes/level.routes.js";
 
 import { authenticateToken } from "./middlewares/auth.middleware.js";
 import { requestLogger } from "./middlewares/logger.middleware.js";
@@ -35,6 +36,7 @@ app.use("/events", eventRoutes);
 app.use("/shop", authenticateToken, shopRoutes);
 app.use("/profile", authenticateToken, profileRoutes);
 app.use("/users", authenticateToken, userRoutes);
+app.use("/levels", levelRoutes);
 
 app.get("/", (req: Request, res: Response) => {
   res.status(200).json({ message: "Shnele Pepe Fa Fatafa" });
