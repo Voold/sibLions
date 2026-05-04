@@ -363,19 +363,19 @@ curl -X DELETE {baseURL}/events/a1b2c3d4-e5f6-4789-8abc-1234567890ab/unregister 
 }
 ```
 
-### GET `/events/:eventId/persons`
+### GET `/events/:uuid/persons`
 
 Список участников мероприятия.
 
 Что ожидает:
 
 - Cookie `app_token`
-- `eventId` в path как число
+- `uuid` в path
 
 Пример запроса:
 
 ```bash
-curl {baseURL}/events/1/persons \
+curl {baseURL}/events/a1b2c3d4-e5f6-4789-8abc-1234567890ab/persons \
   --cookie "app_token=your_access_token"
 ```
 
@@ -402,20 +402,20 @@ curl {baseURL}/events/1/persons \
 }
 ```
 
-### POST `/events/:eventId/persons`
+### POST `/events/:uuid/persons`
 
 Отмечает людей на мероприятии и начисляет баллы за участие.
 
 Что ожидает:
 
 - Cookie `app_token`
-- `eventId` в path как число
+- `uuid` в path
 - `userIds` - массив чисел
 
 Пример запроса:
 
 ```bash
-curl -X POST {baseURL}/events/1/persons \
+curl -X POST {baseURL}/events/a1b2c3d4-e5f6-4789-8abc-1234567890ab/persons \
   -H "Content-Type: application/json" \
   --cookie "app_token=your_access_token" \
   -d '{

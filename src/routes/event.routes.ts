@@ -23,12 +23,12 @@ router.delete(
   eventController.unregisterFromEvent,
 );
 router.get(
-  "/:eventId/persons",
+  "/:uuid/persons",
   authenticateToken,
   eventController.getEventPersons,
 );
 router.post(
-  "/:eventId/persons",
+  "/:uuid/persons",
   authenticateToken,
   eventController.addEventPersons,
 );
