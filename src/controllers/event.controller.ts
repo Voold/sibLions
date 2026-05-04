@@ -10,8 +10,212 @@ const parseOptionalDate = (value: unknown): Date | undefined => {
   return Number.isNaN(parsedDate.getTime()) ? undefined : parsedDate;
 };
 
+const parseOptionalInteger = (value: unknown): number | undefined => {
+  if (value === undefined || value === null || value === "") {
+    return undefined;
+  }
+
+  const parsedNumber = Number(value);
+  return Number.isInteger(parsedNumber) && parsedNumber >= 0
+    ? parsedNumber
+    : undefined;
+};
+
 const UUID_V4_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+export const updateEvent = async (req: Request, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const eventUuid = req.params.uuid as string;
+
+    if (!eventUuid || !UUID_V4_REGEX.test(eventUuid)) {
+      return res.status(400).json({ message: "Invalid event uuid" });
+    }
+
+    const body = req.body as Record<string, unknown>;
+    const hasUpdates = [
+      "title",
+      "description",
+      "eventType",
+      "status",
+      "startDate",
+      "endDate",
+      "registrationDeadline",
+      "participantPoints",
+      "fanPoints",
+      "maxParticipants",
+      "location",
+    ].some((field) => body[field] !== undefined);
+
+    if (!hasUpdates) {
+      return res
+        .status(400)
+        .json({ message: "At least one field is required" });
+    }
+
+    const updateInput: {
+      title?: string;
+      description?: string;
+      eventType?: string;
+      status?: string;
+      startDate?: Date;
+      endDate?: Date;
+      registrationDeadline?: Date;
+      participantPoints?: number;
+      fanPoints?: number;
+      maxParticipants?: number;
+      location?: string;
+    } = {};
+
+    if (body.title !== undefined) {
+      if (typeof body.title !== "string" || body.title.trim().length === 0) {
+        return res
+          .status(400)
+          .json({ message: "title must be a non-empty string" });
+      }
+
+      updateInput.title = body.title.trim();
+    }
+
+    if (body.description !== undefined) {
+      if (typeof body.description !== "string") {
+        return res
+          .status(400)
+          .json({ message: "description must be a string" });
+      }
+
+      updateInput.description = body.description;
+    }
+
+    if (body.eventType !== undefined) {
+      if (typeof body.eventType !== "string") {
+        return res.status(400).json({ message: "eventType must be a string" });
+      }
+
+      updateInput.eventType = body.eventType;
+    }
+
+    if (body.status !== undefined) {
+      if (typeof body.status !== "string") {
+        return res.status(400).json({ message: "status must be a string" });
+      }
+
+      updateInput.status = body.status;
+    }
+
+    if (body.startDate !== undefined) {
+      const parsedStartDate = parseOptionalDate(body.startDate);
+
+      if (!parsedStartDate) {
+        return res.status(400).json({ message: "Invalid startDate format" });
+      }
+
+      updateInput.startDate = parsedStartDate;
+    }
+
+    if (body.endDate !== undefined) {
+      const parsedEndDate = parseOptionalDate(body.endDate);
+
+      if (!parsedEndDate) {
+        return res.status(400).json({ message: "Invalid endDate format" });
+      }
+
+      updateInput.endDate = parsedEndDate;
+    }
+
+    if (body.registrationDeadline !== undefined) {
+      const parsedRegistrationDeadline = parseOptionalDate(
+        body.registrationDeadline,
+      );
+
+      if (!parsedRegistrationDeadline) {
+        return res
+          .status(400)
+          .json({ message: "Invalid registrationDeadline format" });
+      }
+
+      updateInput.registrationDeadline = parsedRegistrationDeadline;
+    }
+
+    if (body.participantPoints !== undefined) {
+      const parsedParticipantPoints = parseOptionalInteger(
+        body.participantPoints,
+      );
+
+      if (parsedParticipantPoints === undefined) {
+        return res
+          .status(400)
+          .json({
+            message: "participantPoints must be a non-negative integer",
+          });
+      }
+
+      updateInput.participantPoints = parsedParticipantPoints;
+    }
+
+    if (body.fanPoints !== undefined) {
+      const parsedFanPoints = parseOptionalInteger(body.fanPoints);
+
+      if (parsedFanPoints === undefined) {
+        return res
+          .status(400)
+          .json({ message: "fanPoints must be a non-negative integer" });
+      }
+
+      updateInput.fanPoints = parsedFanPoints;
+    }
+
+    if (body.maxParticipants !== undefined) {
+      const parsedMaxParticipants = parseOptionalInteger(body.maxParticipants);
+
+      if (parsedMaxParticipants === undefined) {
+        return res
+          .status(400)
+          .json({ message: "maxParticipants must be a non-negative integer" });
+      }
+
+      updateInput.maxParticipants = parsedMaxParticipants;
+    }
+
+    if (body.location !== undefined) {
+      if (typeof body.location !== "string") {
+        return res.status(400).json({ message: "location must be a string" });
+      }
+
+      updateInput.location = body.location;
+    }
+
+    const updatedEvent = await eventService.updateEventByUuid(
+      eventUuid,
+      updateInput,
+    );
+
+    const { id: _id, ...publicEvent } = updatedEvent;
+
+    return res.status(200).json({
+      message: "Мероприятие успешно обновлено",
+      event: publicEvent,
+    });
+  } catch (error: any) {
+    console.error("[UPDATE EVENT ERROR]:", error.message);
+
+    if (error.message === "Event not found") {
+      return res.status(404).json({ message: error.message });
+    }
+
+    if (
+      error.message === "endDate must be greater than or equal to startDate"
+    ) {
+      return res.status(400).json({ message: error.message });
+    }
+
+    return res.status(500).json({ message: "Server error" });
+  }
+};
 
 export const createEvent = async (req: Request, res: Response) => {
   try {
@@ -44,7 +248,9 @@ export const createEvent = async (req: Request, res: Response) => {
     if (parsedEndDate < parsedStartDate) {
       return res
         .status(400)
-        .json({ message: "endDate must be greater than or equal to startDate" });
+        .json({
+          message: "endDate must be greater than or equal to startDate",
+        });
     }
 
     const parsedRegistrationDeadline = parseOptionalDate(
@@ -181,8 +387,9 @@ export const registerForEvent = async (req: Request, res: Response) => {
       event.id,
       registrationType,
     );
-    const currentParticipants =
-      await eventService.getEventParticipantCount(event.id);
+    const currentParticipants = await eventService.getEventParticipantCount(
+      event.id,
+    );
 
     res.status(201).json({
       success: true,
@@ -227,8 +434,9 @@ export const unregisterFromEvent = async (req: Request, res: Response) => {
     }
 
     await eventService.unregisterFromEvent(req.user.userId, event.id);
-    const currentParticipants =
-      await eventService.getEventParticipantCount(event.id);
+    const currentParticipants = await eventService.getEventParticipantCount(
+      event.id,
+    );
 
     return res.status(200).json({
       success: true,

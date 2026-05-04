@@ -19,6 +19,20 @@ interface CreateEventInput {
   organizerId?: number | undefined;
 }
 
+interface UpdateEventInput {
+  title?: string | undefined;
+  description?: string | undefined;
+  eventType?: string | undefined;
+  status?: string | undefined;
+  startDate?: Date | undefined;
+  endDate?: Date | undefined;
+  registrationDeadline?: Date | undefined;
+  participantPoints?: number | undefined;
+  fanPoints?: number | undefined;
+  maxParticipants?: number | undefined;
+  location?: string | undefined;
+}
+
 export const getAllEvents = async () => {
   const result = await db.select().from(events);
 
@@ -83,7 +97,9 @@ export const getEventById = async (id: number): Promise<Event | null> => {
   return result[0] || null;
 };
 
-export const getEventByUuid = async (eventUuid: string): Promise<Event | null> => {
+export const getEventByUuid = async (
+  eventUuid: string,
+): Promise<Event | null> => {
   const result = await db
     .select()
     .from(events)
@@ -130,6 +146,59 @@ export const deleteEventByUuid = async (eventUuid: string) => {
 
   if (!result[0]) {
     throw new Error("Event not found");
+  }
+
+  return result[0];
+};
+
+export const updateEventByUuid = async (
+  eventUuid: string,
+  input: UpdateEventInput,
+) => {
+  const existingEvent = await getEventByUuid(eventUuid);
+
+  if (!existingEvent) {
+    throw new Error("Event not found");
+  }
+
+  const nextStartDate = input.startDate ?? existingEvent.startDate;
+  const nextEndDate = input.endDate ?? existingEvent.endDate;
+
+  if (nextEndDate < nextStartDate) {
+    throw new Error("endDate must be greater than or equal to startDate");
+  }
+
+  const updateData = {
+    ...(input.title !== undefined ? { title: input.title } : {}),
+    ...(input.description !== undefined
+      ? { description: input.description }
+      : {}),
+    ...(input.eventType !== undefined ? { eventType: input.eventType } : {}),
+    ...(input.status !== undefined ? { status: input.status } : {}),
+    ...(input.startDate !== undefined ? { startDate: input.startDate } : {}),
+    ...(input.endDate !== undefined ? { endDate: input.endDate } : {}),
+    ...(input.registrationDeadline !== undefined
+      ? { registrationDeadline: input.registrationDeadline }
+      : {}),
+    ...(input.participantPoints !== undefined
+      ? { participantPoints: input.participantPoints }
+      : {}),
+    ...(input.fanPoints !== undefined ? { fanPoints: input.fanPoints } : {}),
+    ...(input.maxParticipants !== undefined
+      ? { maxParticipants: input.maxParticipants }
+      : {}),
+    ...(input.location !== undefined ? { location: input.location } : {}),
+    updatedAt: new Date(),
+  };
+
+  const result = await db
+    .update(events)
+    .set(updateData)
+    .where(eq(events.uuid, eventUuid))
+    .returning();
+
+  if (!result[0]) {
+    throw new Error("Failed to update event");
   }
 
   return result[0];

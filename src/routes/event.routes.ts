@@ -8,6 +8,7 @@ import {
 const router = Router();
 
 router.post("/", authenticateToken, eventController.createEvent);
+router.patch("/:uuid", authenticateToken, eventController.updateEvent);
 router.delete("/:uuid", authenticateToken, eventController.deleteEventByUuid);
 router.get("/", attachUserIfPresent, eventController.getEvents);
 router.get("/:uuid", attachUserIfPresent, eventController.getEventDetail);
