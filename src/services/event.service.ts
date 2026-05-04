@@ -1,5 +1,5 @@
 import { db } from "../db/index.js";
-import { events, registrations } from "../db/schema.js";
+import { events, registrations, users, pointsHistory } from "../db/schema.js";
 import { eq, and, count, inArray } from "drizzle-orm";
 import type { Event, Registration } from "../types/event.types.js";
 
@@ -186,4 +186,111 @@ export const unregisterFromEvent = async (
   }
 
   return result[0];
+};
+
+export const getEventPersons = async (eventId: number) => {
+  const event = await getEventById(eventId);
+
+  if (!event) {
+    throw new Error("Event not found");
+  }
+
+  const persons = await db
+    .select({
+      id: users.id,
+      username: users.username,
+      firstName: users.firstName,
+      lastName: users.lastName,
+      email: users.email,
+      totalPoints: users.totalPoints,
+      registrationId: registrations.id,
+      role: registrations.role,
+      attended: registrations.attended,
+      registeredAt: registrations.registeredAt,
+    })
+    .from(registrations)
+    .innerJoin(users, eq(registrations.userId, users.id))
+    .where(eq(registrations.eventId, eventId));
+
+  return persons;
+};
+
+export const addPersonsAndAwardPoints = async (
+  eventId: number,
+  userIds: number[],
+) => {
+  const event = await getEventById(eventId);
+
+  if (!event) {
+    throw new Error("Event not found");
+  }
+
+  if (!event.participantPoints) {
+    throw new Error("Event has no points configured");
+  }
+
+  if (userIds.length === 0) {
+    throw new Error("User IDs array cannot be empty");
+  }
+
+  const results = [];
+  const now = new Date();
+
+  for (const userId of userIds) {
+    const registration = await db
+      .select()
+      .from(registrations)
+      .where(
+        and(
+          eq(registrations.userId, userId),
+          eq(registrations.eventId, eventId),
+        ),
+      )
+      .limit(1);
+
+    if (!registration[0]) {
+      continue;
+    }
+
+    await db
+      .update(registrations)
+      .set({
+        attended: true,
+        attendedAt: now,
+      })
+      .where(eq(registrations.id, registration[0].id));
+
+    const user = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    const currentPoints = user[0]?.totalPoints || 0;
+    const newPoints = currentPoints + event.participantPoints;
+
+    await db
+      .update(users)
+      .set({
+        totalPoints: newPoints,
+      })
+      .where(eq(users.id, userId));
+
+    await db.insert(pointsHistory).values({
+      userId,
+      points: event.participantPoints,
+      pointsType: "event_attendance",
+      description: `Attendance at ${event.title}`,
+      eventId,
+      registrationId: registration[0].id,
+    });
+
+    results.push({
+      userId,
+      points: event.participantPoints,
+      registered: true,
+    });
+  }
+
+  return results;
 };

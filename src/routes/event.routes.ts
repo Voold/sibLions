@@ -19,5 +19,15 @@ router.delete(
   authenticateToken,
   eventController.unregisterFromEvent,
 );
+router.get(
+  "/:eventId/persons",
+  authenticateToken,
+  eventController.getEventPersons,
+);
+router.post(
+  "/:eventId/persons",
+  authenticateToken,
+  eventController.addEventPersons,
+);
 
 export default router;

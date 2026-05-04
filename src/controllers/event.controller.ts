@@ -125,3 +125,72 @@ export const unregisterFromEvent = async (req: Request, res: Response) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
+
+export const getEventPersons = async (req: Request, res: Response) => {
+  try {
+    const eventId = parseInt(req.params.eventId as string);
+
+    if (Number.isNaN(eventId)) {
+      return res.status(400).json({ message: "Invalid event id" });
+    }
+
+    const persons = await eventService.getEventPersons(eventId);
+    res.json({
+      success: true,
+      count: persons.length,
+      persons,
+    });
+  } catch (error: any) {
+    console.error("[GET EVENT PERSONS ERROR]:", error.message);
+
+    if (error.message === "Event not found") {
+      return res.status(404).json({ message: error.message });
+    }
+
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const addEventPersons = async (req: Request, res: Response) => {
+  try {
+    const eventId = parseInt(req.params.eventId as string);
+
+    if (Number.isNaN(eventId)) {
+      return res.status(400).json({ message: "Invalid event id" });
+    }
+
+    const { userIds } = req.body;
+
+    if (!Array.isArray(userIds)) {
+      return res
+        .status(400)
+        .json({ message: "userIds must be an array of numbers" });
+    }
+
+    if (userIds.length === 0) {
+      return res.status(400).json({ message: "userIds cannot be empty" });
+    }
+
+    const results = await eventService.addPersonsAndAwardPoints(
+      eventId,
+      userIds,
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Points awarded successfully",
+      results,
+    });
+  } catch (error: any) {
+    console.error("[ADD EVENT PERSONS ERROR]:", error.message);
+
+    if (
+      error.message === "Event not found" ||
+      error.message === "Event has no points configured"
+    ) {
+      return res.status(400).json({ message: error.message });
+    }
+
+    res.status(500).json({ message: "Server error" });
+  }
+};
