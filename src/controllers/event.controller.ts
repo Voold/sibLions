@@ -147,11 +147,9 @@ export const updateEvent = async (req: Request, res: Response) => {
       );
 
       if (parsedParticipantPoints === undefined) {
-        return res
-          .status(400)
-          .json({
-            message: "participantPoints must be a non-negative integer",
-          });
+        return res.status(400).json({
+          message: "participantPoints must be a non-negative integer",
+        });
       }
 
       updateInput.participantPoints = parsedParticipantPoints;
@@ -246,11 +244,9 @@ export const createEvent = async (req: Request, res: Response) => {
     }
 
     if (parsedEndDate < parsedStartDate) {
-      return res
-        .status(400)
-        .json({
-          message: "endDate must be greater than or equal to startDate",
-        });
+      return res.status(400).json({
+        message: "endDate must be greater than or equal to startDate",
+      });
     }
 
     const parsedRegistrationDeadline = parseOptionalDate(
@@ -459,13 +455,19 @@ export const unregisterFromEvent = async (req: Request, res: Response) => {
 
 export const getEventPersons = async (req: Request, res: Response) => {
   try {
-    const eventId = parseInt(req.params.eventId as string);
+    const eventUuid = req.params.uuid as string;
 
-    if (Number.isNaN(eventId)) {
-      return res.status(400).json({ message: "Invalid event id" });
+    if (!eventUuid || !UUID_V4_REGEX.test(eventUuid)) {
+      return res.status(400).json({ message: "Invalid event uuid" });
     }
 
-    const persons = await eventService.getEventPersons(eventId);
+    const event = await eventService.getEventByUuid(eventUuid);
+
+    if (!event) {
+      return res.status(404).json({ message: "Event not found" });
+    }
+
+    const persons = await eventService.getEventPersons(event.id);
     res.json({
       success: true,
       count: persons.length,
@@ -484,10 +486,16 @@ export const getEventPersons = async (req: Request, res: Response) => {
 
 export const addEventPersons = async (req: Request, res: Response) => {
   try {
-    const eventId = parseInt(req.params.eventId as string);
+    const eventUuid = req.params.uuid as string;
 
-    if (Number.isNaN(eventId)) {
-      return res.status(400).json({ message: "Invalid event id" });
+    if (!eventUuid || !UUID_V4_REGEX.test(eventUuid)) {
+      return res.status(400).json({ message: "Invalid event uuid" });
+    }
+
+    const event = await eventService.getEventByUuid(eventUuid);
+
+    if (!event) {
+      return res.status(404).json({ message: "Event not found" });
     }
 
     const { userIds } = req.body;
@@ -503,7 +511,7 @@ export const addEventPersons = async (req: Request, res: Response) => {
     }
 
     const results = await eventService.addPersonsAndAwardPoints(
-      eventId,
+      event.id,
       userIds,
     );
 
