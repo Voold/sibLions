@@ -122,3 +122,29 @@ export const refresh = async (req: Request, res: Response) => {
     res.status(401).json({ message: "Session expired or invalid" });
   }
 };
+
+export const logout = async (req: Request, res: Response) => {
+  try {
+    const { refresh_token } = req.cookies;
+
+    const cookieOptions = getCookieOptions();
+
+    if (refresh_token) {
+      await authService.revokeSession(refresh_token);
+    }
+
+    res.clearCookie("app_token", cookieOptions);
+    res.clearCookie("refresh_token", cookieOptions);
+
+    res.status(200).json({ message: "Logged out" });
+  } catch (error: any) {
+    console.error("[LOGOUT ERROR]:", error.message);
+
+    const cookieOptions = getCookieOptions();
+    res.clearCookie("app_token", cookieOptions);
+    res.clearCookie("refresh_token", cookieOptions);
+
+    // Return success to keep logout idempotent
+    res.status(200).json({ message: "Logged out" });
+  }
+};
