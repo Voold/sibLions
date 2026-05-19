@@ -1,8 +1,27 @@
 export interface Product {
-  id: number;
+  uuid: string;
   name: string;
   description: string;
   price: number;
   image: string | null;
   points: number;
+}
+
+export interface ShopCheckoutPayload {
+  productUuids: string[];
+}
+
+export interface ShopCheckoutResult {
+  orders: Array<{
+    id: number;
+    userId: number;
+    productId: number;
+    quantity: number | null;
+    totalPoints: number;
+    status: string | null;
+    createdAt: Date | null;
+    updatedAt: Date | null;
+  }>;
+  spentPoints: number;
+  remainingPoints: number;
 }

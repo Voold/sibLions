@@ -1,8 +1,14 @@
-import type { Request, Response } from 'express';
-import * as profileService from '../services/profile.service.js';
+import type { Request, Response } from "express";
+import * as profileService from "../services/profile.service.js";
 
 export const getOrders = async (req: Request, res: Response) => {
-  const orders = await profileService.getUserOrders();
+  const userId = req.user?.userId;
+
+  if (!userId) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  const orders = await profileService.getUserOrders(userId);
   res.json(orders);
 };
 
