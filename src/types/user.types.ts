@@ -1,5 +1,5 @@
-import type { InferSelectModel, InferInsertModel } from 'drizzle-orm';
-import { users } from '../db/schema.js';
+import type { InferSelectModel, InferInsertModel } from "drizzle-orm";
+import { users } from "../db/schema.js";
 
 export type User = InferSelectModel<typeof users>;
 export type NewUser = InferInsertModel<typeof users>;
@@ -10,4 +10,5 @@ export type UserProfileWithLevel = {
   points: number | null;
   levelName: string | null;
   levelColor: string | null;
+  bonusPercent: number | null;
 };

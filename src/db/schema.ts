@@ -18,6 +18,7 @@ export const levels = pgTable("levels", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 100 }).notNull(),
   minPoints: integer("min_points").notNull().unique(),
+  bonusPercent: integer("bonus_percent").notNull().default(0),
   description: text("description"),
   benefits: text("benefits"),
   badgeImage: varchar("badge_image", { length: 255 }),
