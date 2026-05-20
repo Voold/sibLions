@@ -1,7 +1,11 @@
 import { desc, eq } from "drizzle-orm";
 import { db } from "../db/index.js";
-import { orders, products } from "../db/schema.js";
-import type { Order, Achievement } from "../types/profile.types.js";
+import { orders, products, pointsHistory } from "../db/schema.js";
+import type {
+  Order,
+  Achievement,
+  PointsEntry,
+} from "../types/profile.types.js";
 
 const formatOrderDate = (value: Date | null | undefined) => {
   const date = value ?? new Date();
@@ -63,3 +67,33 @@ export const getUserOrders = async (userId: number): Promise<Order[]> => {
   }));
 };
 export const getUserAchievements = async () => MOCK_ACHIEVEMENTS;
+
+export const getUserPointsHistory = async (
+  userId: number,
+): Promise<PointsEntry[]> => {
+  const rows = await db
+    .select({
+      id: pointsHistory.id,
+      points: pointsHistory.points,
+      pointsType: pointsHistory.pointsType,
+      description: pointsHistory.description,
+      eventId: pointsHistory.eventId,
+      registrationId: pointsHistory.registrationId,
+      createdAt: pointsHistory.createdAt,
+    })
+    .from(pointsHistory)
+    .where(eq(pointsHistory.userId, userId))
+    .orderBy(desc(pointsHistory.createdAt));
+
+  return rows.map((r) => ({
+    id: r.id,
+    points: r.points,
+    pointsType: r.pointsType ?? null,
+    description: r.description ?? null,
+    eventId: r.eventId ?? null,
+    registrationId: r.registrationId ?? null,
+    createdAt: r.createdAt
+      ? r.createdAt.toISOString()
+      : new Date().toISOString(),
+  }));
+};

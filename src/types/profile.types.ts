@@ -27,3 +27,13 @@ export interface UserProfile {
   achievements: Achievement[];
   orders: Order[];
 }
+
+export interface PointsEntry {
+  id: number;
+  points: number;
+  pointsType: string | null;
+  description: string | null;
+  eventId: number | null;
+  registrationId: number | null;
+  createdAt: string; // ISO
+}
