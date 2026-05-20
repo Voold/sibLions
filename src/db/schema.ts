@@ -159,6 +159,7 @@ export const pointsHistory = pgTable(
 // 7. Заказы мерча
 export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
+  uuid: varchar("uuid", { length: 36 }).notNull().unique(),
   userId: integer("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),

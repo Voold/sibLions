@@ -1,4 +1,5 @@
 import { eq, inArray } from "drizzle-orm";
+import { randomUUID } from "crypto";
 import { db } from "../db/index.js";
 import { orders, pointsHistory, products, users } from "../db/schema.js";
 import type { Product, ShopCheckoutResult } from "../types/shop.types.js";
@@ -112,6 +113,7 @@ export const checkoutProducts = async (
           }
 
           return {
+            uuid: randomUUID(),
             userId,
             productId: product.id,
             quantity: 1,

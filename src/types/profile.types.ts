@@ -1,13 +1,14 @@
-export type OrderStatus = 'pending' | 'completed' | 'cancelled' | 'shipped';
+export type OrderStatus = "pending" | "completed" | "cancelled" | "shipped";
 
 export interface Order {
   id: number;
-  image: string | null; 
-  product: string; 
+  uuid?: string;
+  image: string | null;
+  product: string;
   description: string;
-  price: string; 
+  price: string;
   status: OrderStatus;
-  time: string; 
+  time: string;
   date: string;
 }
 
