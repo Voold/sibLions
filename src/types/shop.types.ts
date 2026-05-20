@@ -8,7 +8,7 @@ export interface Product {
 }
 
 export interface ShopCheckoutPayload {
-  productUuids: string[];
+  items: Array<{ item: string; count: number }>;
 }
 
 export interface ShopCheckoutResult {

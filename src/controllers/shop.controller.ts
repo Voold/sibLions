@@ -17,31 +17,35 @@ export const getProductByUuid = async (req: Request, res: Response) => {
 
 export const checkout = async (req: Request, res: Response) => {
   const userId = req.user?.userId;
-  const productUuids = req.body?.productUuids;
+  const items = req.body?.items;
 
   if (!userId) {
     return res.status(401).json({ message: "Unauthorized" });
   }
 
-  if (!Array.isArray(productUuids) || productUuids.length === 0) {
-    return res
-      .status(400)
-      .json({ message: "productUuids must be a non-empty array" });
+  if (!Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ message: "items must be a non-empty array" });
   }
 
   if (
-    productUuids.some(
-      (productUuid: unknown) =>
-        typeof productUuid !== "string" || !productUuid.trim(),
+    items.some(
+      (it: any) =>
+        !it ||
+        typeof it.item !== "string" ||
+        !it.item.trim() ||
+        typeof it.count !== "number" ||
+        !Number.isInteger(it.count) ||
+        it.count <= 0,
     )
   ) {
-    return res
-      .status(400)
-      .json({ message: "productUuids must contain only uuid strings" });
+    return res.status(400).json({
+      message:
+        "items must contain objects with { item: uuid-string, count: positive integer }",
+    });
   }
 
   try {
-    const result = await shopService.checkoutProducts(userId, productUuids);
+    const result = await shopService.checkoutProducts(userId, items);
 
     return res.status(201).json({
       message: "Order created successfully",

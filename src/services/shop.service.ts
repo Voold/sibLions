@@ -49,9 +49,9 @@ export const getProductByUuid = async (
 
 export const checkoutProducts = async (
   userId: number,
-  productUuids: string[],
+  items: Array<{ item: string; count: number }>,
 ): Promise<ShopCheckoutResult> => {
-  if (productUuids.length === 0) {
+  if (items.length === 0) {
     throw new Error("No products provided");
   }
 
@@ -68,7 +68,7 @@ export const checkoutProducts = async (
 
     const currentPoints = user.totalPoints ?? 0;
 
-    const uniqueUuids = [...new Set(productUuids)];
+    const uniqueUuids = [...new Set(items.map((i) => i.item))];
     const productRows = await tx
       .select({
         id: products.id,
@@ -87,14 +87,14 @@ export const checkoutProducts = async (
       productRows.map((product) => [product.uuid, product]),
     );
 
-    const spentPoints = productUuids.reduce((total, productUuid) => {
-      const product = productMap.get(productUuid);
+    const spentPoints = items.reduce((total, it) => {
+      const product = productMap.get(it.item);
 
       if (!product) {
         throw new Error("Some products were not found");
       }
 
-      return total + product.points;
+      return total + product.points * it.count;
     }, 0);
 
     if (currentPoints < spentPoints) {
@@ -105,8 +105,8 @@ export const checkoutProducts = async (
     const insertedOrders = await tx
       .insert(orders)
       .values(
-        productUuids.map((productUuid) => {
-          const product = productMap.get(productUuid);
+        items.map((it) => {
+          const product = productMap.get(it.item);
 
           if (!product) {
             throw new Error("Some products were not found");
@@ -116,8 +116,8 @@ export const checkoutProducts = async (
             uuid: randomUUID(),
             userId,
             productId: product.id,
-            quantity: 1,
-            totalPoints: product.points,
+            quantity: it.count,
+            totalPoints: product.points * it.count,
             status: "pending",
             createdAt,
             updatedAt: createdAt,
@@ -137,7 +137,7 @@ export const checkoutProducts = async (
       userId,
       points: -spentPoints,
       pointsType: "shop_order",
-      description: `Shop order: ${productUuids.join(", ")}`,
+      description: `Shop order: ${items.map((i) => `${i.item}x${i.count}`).join(", ")}`,
     });
 
     return {
