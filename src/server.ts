@@ -39,7 +39,7 @@ app.use(requestLogger);
 app.use("/auth", authRoutes);
 
 app.use("/events", eventRoutes);
-app.use("/shop", authenticateToken, shopRoutes);
+app.use("/shop", shopRoutes);
 app.use("/profile", authenticateToken, profileRoutes);
 app.use("/users", authenticateToken, userRoutes);
 app.use("/levels", levelRoutes);
