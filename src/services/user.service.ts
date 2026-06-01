@@ -1,7 +1,7 @@
 import { db } from "../db/index.js";
 import { users } from "../db/schema.js";
 import { eq } from "drizzle-orm";
-import { levels } from "../db/schema.js";
+import { getLevelByPoints } from "../constants/levels.js";
 import type {
   User,
   UserProfileWithLevel,
@@ -27,15 +27,25 @@ export const getUserWithLevel = async (
       id: users.id,
       username: users.username,
       points: users.totalPoints,
-      levelName: levels.name,
-      levelColor: levels.color,
-      bonusPercent: levels.bonusPercent,
+      accountPoints: users.accountPoints,
     })
     .from(users)
-    .leftJoin(levels, eq(users.currentLevelId, levels.id))
     .where(eq(users.id, id));
 
-  return result[0] || null;
+  const user = result[0];
+
+  if (!user) {
+    return null;
+  }
+
+  const level = getLevelByPoints(user.accountPoints ?? 0);
+
+  return {
+    ...user,
+    levelName: level.name,
+    levelColor: level.color,
+    bonusPercent: level.bonus_percent,
+  };
 };
 
 export const createUser = async (data: NewUser): Promise<User | null> => {

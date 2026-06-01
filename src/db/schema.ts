@@ -62,6 +62,7 @@ export const users = pgTable(
     role: varchar("role", { length: 20 }).default("student"),
     tpuId: varchar("tpu_id", { length: 20 }).unique(),
     totalPoints: integer("total_points").default(0),
+    accountPoints: integer("account_points").notNull().default(0),
     currentLevelId: integer("current_level_id").references(() => levels.id, {
       onDelete: "set null",
     }),

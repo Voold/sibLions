@@ -43,6 +43,13 @@
       "when": 1776810003000,
       "tag": "0005_orders_uuid",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1776810004000,
+      "tag": "0006_account_points",
+      "breakpoints": true
     }
   ]
 }

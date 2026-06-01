@@ -3,6 +3,7 @@ import { events, registrations, users, pointsHistory } from "../db/schema.js";
 import { eq, and, count, inArray } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import type { Event, Registration } from "../types/event.types.js";
+import { getLevelByPoints } from "../constants/levels.js";
 
 interface CreateEventInput {
   title: string;
@@ -409,12 +410,17 @@ export const addPersonsAndAwardPoints = async (
       .limit(1);
 
     const currentPoints = user[0]?.totalPoints || 0;
+    const currentAccountPoints = user[0]?.accountPoints || 0;
     const newPoints = currentPoints + event.participantPoints;
+    const newAccountPoints = Math.max(currentAccountPoints, newPoints);
+    const newLevel = getLevelByPoints(newAccountPoints);
 
     await db
       .update(users)
       .set({
         totalPoints: newPoints,
+        accountPoints: newAccountPoints,
+        currentLevelId: newLevel.id,
       })
       .where(eq(users.id, userId));
 

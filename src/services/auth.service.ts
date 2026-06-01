@@ -176,6 +176,7 @@ export const transformTpuToNewUser = (tpuRawData: any): NewUser => {
     role: "student",
     currentLevelId: 1,
     totalPoints: 0,
+    accountPoints: 0,
   };
 };
 

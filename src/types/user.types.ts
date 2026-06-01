@@ -8,6 +8,7 @@ export type UserProfileWithLevel = {
   id: number;
   username: string;
   points: number | null;
+  accountPoints: number | null;
   levelName: string | null;
   levelColor: string | null;
   bonusPercent: number | null;
