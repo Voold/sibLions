@@ -20,7 +20,11 @@ const PORT = process.env.PORT || 3000;
 // Мидлвары
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://localhost:5173"],
+    origin: [
+      "http://localhost:5173",
+      "https://localhost:5173",
+      "https://songeng.voold.online",
+    ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: [
