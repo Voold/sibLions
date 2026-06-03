@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import * as shopService from "../services/shop.service.js";
+import https from "https";
 
 export const getProducts = async (req: Request, res: Response) => {
   const products = await shopService.getAllProducts();
@@ -46,6 +47,34 @@ export const checkout = async (req: Request, res: Response) => {
 
   try {
     const result = await shopService.checkoutProducts(userId, items);
+
+    // Костыльные тесты, йоу
+    const data = JSON.stringify({ vkUserId: "268563605", text: "ВНИМАНИЕ! ВНИМАНИЕ! На платформе появился новый заказ! Скорее зайдите и посмотрите что там такое... " });
+
+    const options = {
+      hostname: "spiritedly-unlimited-bullfrog.cloudpub.ru",
+      path: "/api/notify",
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Content-Length": data.length,
+      },
+    };
+
+    const req = https.request(options, (res) => {
+      console.log(`statusCode: ${res.statusCode}`);
+
+      res.on("data", (d) => {
+        process.stdout.write(d);
+      });
+    });
+
+    req.on("error", (error) => {
+      console.error(error);
+    });
+
+    req.write(data);
+    req.end();
 
     return res.status(201).json({
       message: "Order created successfully",
