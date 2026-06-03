@@ -49,7 +49,10 @@ export const checkout = async (req: Request, res: Response) => {
     const result = await shopService.checkoutProducts(userId, items);
 
     // Костыльные тесты, йоу
-    const data = JSON.stringify({ vkUserId: "268563605", text: "ВНИМАНИЕ! ВНИМАНИЕ! На платформе появился новый заказ! Скорее зайдите и посмотрите что там такое... " });
+    const data = JSON.stringify({
+      vkUserId: "268563605",
+      text: "ВНИМАНИЕ! ВНИМАНИЕ! На платформе появился новый заказ! Скорее зайдите и посмотрите что там такое... ",
+    });
 
     const options = {
       hostname: "spiritedly-unlimited-bullfrog.cloudpub.ru",
@@ -100,5 +103,15 @@ export const checkout = async (req: Request, res: Response) => {
     }
 
     return res.status(500).json({ message });
+  }
+};
+
+export const getAllOrders = async (req: Request, res: Response) => {
+  try {
+    const ordersList = await shopService.getAllOrders();
+    return res.json(ordersList);
+  } catch (error) {
+    console.error("Ошибка при получении всех заказов:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
   }
 };

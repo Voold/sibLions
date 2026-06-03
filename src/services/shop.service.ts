@@ -1,4 +1,4 @@
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, desc } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { db } from "../db/index.js";
 import { orders, pointsHistory, products, users } from "../db/schema.js";
@@ -146,4 +146,38 @@ export const checkoutProducts = async (
       remainingPoints,
     };
   });
+};
+
+export const getAllOrders = async () => {
+  const allOrders = await db
+    .select({
+      id: orders.id,
+      uuid: orders.uuid,
+      status: orders.status,
+      quantity: orders.quantity,
+      totalPoints: orders.totalPoints,
+      createdAt: orders.createdAt,
+      updatedAt: orders.updatedAt,
+      // Информация о пользователе
+      user: {
+        id: users.id,
+        username: users.username,
+        firstName: users.firstName,
+        lastName: users.lastName,
+      },
+      // Информация о товаре
+      product: {
+        uuid: products.uuid,
+        name: products.name,
+        image: products.image,
+        price: products.price,
+        points: products.points,
+      },
+    })
+    .from(orders)
+    .innerJoin(products, eq(orders.productId, products.id))
+    .innerJoin(users, eq(orders.userId, users.id))
+    .orderBy(desc(orders.createdAt)); // Сортируем от новых к старым
+
+  return allOrders;
 };

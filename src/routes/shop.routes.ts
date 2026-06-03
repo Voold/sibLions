@@ -5,7 +5,10 @@ import { authenticateToken } from "../middlewares/auth.middleware.js";
 const router = Router();
 
 router.get("/", shopController.getProducts);
+router.get("/orders", authenticateToken, shopController.getAllOrders);
 router.post("/orders", authenticateToken, shopController.checkout);
 router.get("/:uuid", authenticateToken, shopController.getProductByUuid);
 
 export default router;
+
+
