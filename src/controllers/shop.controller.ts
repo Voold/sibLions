@@ -115,3 +115,33 @@ export const getAllOrders = async (req: Request, res: Response) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+export const updateOrderStatus = async (req: Request, res: Response) => {
+  const uuid = req.params.uuid as string;
+  const { status } = req.body;
+
+  const allowedStatuses = ["pending", "processing", "completed", "cancelled"];
+  if (!status || !allowedStatuses.includes(status)) {
+    return res.status(400).json({
+      message: `Invalid status. Allowed statuses: ${allowedStatuses.join(", ")}`,
+    });
+  }
+
+  try {
+    const updatedOrder = await shopService.updateOrderStatus(uuid, status);
+
+    return res.json({
+      message: "Order status updated successfully",
+      order: updatedOrder,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Server error";
+
+    if (message === "Order not found") {
+      return res.status(404).json({ message });
+    }
+
+    console.error("Ошибка обновления статуса заказа:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};

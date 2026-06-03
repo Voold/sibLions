@@ -181,3 +181,56 @@ export const getAllOrders = async () => {
 
   return allOrders;
 };
+
+export const updateOrderStatus = async (uuid: string, newStatus: string) => {
+  return await db.transaction(async (tx) => {
+    const [order] = await tx
+      .select()
+      .from(orders)
+      .where(eq(orders.uuid, uuid))
+      .limit(1);
+
+    if (!order) {
+      throw new Error("Order not found");
+    }
+
+    if (order.status === newStatus) {
+      return order;
+    }
+
+    if (newStatus === "cancelled" && order.status !== "cancelled") {
+      const [user] = await tx
+        .select({ id: users.id, totalPoints: users.totalPoints })
+        .from(users)
+        .where(eq(users.id, order.userId))
+        .limit(1);
+
+      if (user) {
+        const refundedPoints = (user.totalPoints ?? 0) + order.totalPoints;
+
+        await tx
+          .update(users)
+          .set({ totalPoints: refundedPoints })
+          .where(eq(users.id, user.id));
+
+        await tx.insert(pointsHistory).values({
+          userId: user.id,
+          points: order.totalPoints,
+          pointsType: "refund",
+          description: `Возврат баллов за отмененный заказ мерча: ${uuid}`,
+        });
+      }
+    }
+
+    const [updatedOrder] = await tx
+      .update(orders)
+      .set({ 
+        status: newStatus, 
+        updatedAt: new Date() 
+      })
+      .where(eq(orders.uuid, uuid))
+      .returning();
+
+    return updatedOrder;
+  });
+};
