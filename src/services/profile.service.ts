@@ -48,6 +48,7 @@ export const getUserOrders = async (userId: number): Promise<Order[]> => {
       description: products.description,
       price: products.price,
       points: products.points,
+      quantity: orders.quantity,
       status: orders.status,
       createdAt: orders.createdAt,
     })
@@ -65,6 +66,8 @@ export const getUserOrders = async (userId: number): Promise<Order[]> => {
     status: (order.status ?? "pending") as Order["status"],
     time: formatOrderTime(order.createdAt),
     date: formatOrderDate(order.createdAt),
+    points: order.points,
+    quantity: order.quantity ?? 1,
   }));
 };
 export const getUserAchievements = async () => MOCK_ACHIEVEMENTS;

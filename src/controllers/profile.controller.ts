@@ -8,8 +8,13 @@ export const getOrders = async (req: Request, res: Response) => {
     return res.status(401).json({ message: "Unauthorized" });
   }
 
-  const orders = await profileService.getUserOrders(userId);
-  res.json(orders);
+  try {
+    const orders = await profileService.getUserOrders(Number(userId));
+    return res.json(orders);
+  } catch (error) {
+    console.error("Ошибка при получении заказов:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
 };
 
 export const getAchievements = async (req: Request, res: Response) => {

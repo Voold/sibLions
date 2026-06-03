@@ -7,6 +7,8 @@ export interface Order {
   product: string;
   description: string;
   price: string;
+  points: number;
+  quantity: number;
   status: OrderStatus;
   time: string;
   date: string;
