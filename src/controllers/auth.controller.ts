@@ -21,6 +21,8 @@ export const login = async (req: Request, res: Response) => {
   try {
     const { code, codeVerifier } = req.body;
 
+    const clientOrigin = (req.headers.origin as string) || (req.headers.referer as string) || "";
+
     if (!code || !codeVerifier) {
       return res
         .status(400)
@@ -30,6 +32,7 @@ export const login = async (req: Request, res: Response) => {
     const tpuTokens = await authService.exchangeCodeForToken(
       code,
       codeVerifier,
+      clientOrigin,
     );
 
     const rawTpuData = await authService.getFullUserInfoFromTpu(

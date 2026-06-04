@@ -24,6 +24,7 @@ app.use(
       "http://localhost:5173",
       "https://localhost:5173",
       "https://songeng.voold.online",
+      "https://wostol.github.io",
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],

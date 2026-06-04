@@ -16,13 +16,18 @@ const tpuApi = axios.create({
   },
 });
 
-const getTokenParams = (code: string, verifier?: string) => {
+const getTokenParams = (
+  code: string,
+  verifier?: string,
+  clientOrigin?: string,
+) => {
   const params = new URLSearchParams({
     grant_type: "authorization_code",
     client_id: getOauthConfig.clientId!,
     client_secret: getOauthConfig.clientSecret!,
     code: code,
-    redirect_uri: getOauthConfig.redirectUri,
+    //redirect_uri: getOauthConfig.redirectUri,
+    redirect_uri: clientOrigin + "/project-1" || getOauthConfig.redirectUri!,
   });
   if (verifier) params.append("code_verifier", verifier);
   return params;
@@ -31,8 +36,9 @@ const getTokenParams = (code: string, verifier?: string) => {
 export const exchangeCodeForToken = async (
   code: string,
   codeVerifier?: string,
+  clientOrigin?: string,
 ): Promise<TpuTokenResponse> => {
-  const params = getTokenParams(code, codeVerifier);
+  const params = getTokenParams(code, codeVerifier, clientOrigin);
   const response = await axios.post(
     getOauthConfig.tokenEndpoint,
     params.toString(),
