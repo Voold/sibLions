@@ -49,10 +49,12 @@ export const checkout = async (req: Request, res: Response) => {
     const result = await shopService.checkoutProducts(userId, items);
 
     // Костыльные тесты, йоу
-    const data = JSON.stringify({
-      vkUserId: "268563605",
+    const payload = {
+      vkUserIds: ["268563605", "248274605"],
       text: "ВНИМАНИЕ! ВНИМАНИЕ! На платформе появился новый заказ! Скорее зайдите и посмотрите что там такое... ",
-    });
+    };
+
+    const data = JSON.stringify(payload);
 
     const options = {
       hostname: "spiritedly-unlimited-bullfrog.cloudpub.ru",
@@ -60,20 +62,19 @@ export const checkout = async (req: Request, res: Response) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Content-Length": data.length,
+        "Content-Length": Buffer.byteLength(data),
       },
     };
 
     const req = https.request(options, (res) => {
       console.log(`statusCode: ${res.statusCode}`);
-
       res.on("data", (d) => {
         process.stdout.write(d);
       });
     });
 
     req.on("error", (error) => {
-      console.error(error);
+      console.error("Ошибка запроса:", error);
     });
 
     req.write(data);
